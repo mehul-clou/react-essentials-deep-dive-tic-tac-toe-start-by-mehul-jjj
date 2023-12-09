@@ -5,35 +5,18 @@ import { useState } from "react";
 import { WINNING_COMBINATIONS } from "./winning-combination";
 import GameOver from "./Components/GameOver";
 
+const PLAYER = {
+  X: "Player 1",
+  O: "player 2",
+};
+
 const initialGameBoard = [
   [null, null, null],
   [null, null, null],
   [null, null, null],
 ];
 
-function driveActivePlayer(gameTurns) {
-  let currentPlayer = "X";
-
-  if (gameTurns.length > 0 && gameTurns[0].player === "X") {
-    currentPlayer = "0";
-  }
-  return currentPlayer;
-}
-
-function App() {
-  const [gameTurns, setGameTurns] = useState([]);
-  //const [activePlayer, setActvePlayer] = useState("X");
-  const activePlayer = driveActivePlayer(gameTurns);
-
-  let gameBoard = [...initialGameBoard.map((initial) => [...initial])];
-
-  for (const turn of gameTurns) {
-    const { square, player } = turn;
-    const { row, col } = square;
-
-    gameBoard[row][col] = player;
-  }
-
+function driveWinner(gameBoard, players) {
   let winner;
 
   for (const combination of WINNING_COMBINATIONS) {
@@ -49,15 +32,46 @@ function App() {
       firstSquareSymbol === secondSquareSymbol &&
       firstSquareSymbol === thirdSquareSymbol
     ) {
-      winner = firstSquareSymbol;
+      winner = players[firstSquareSymbol];
     }
   }
+  return winner;
+}
+
+function driveGameBoard(gameTurns) {
+  let gameBoard = [...initialGameBoard.map((initial) => [...initial])];
+
+  for (const turn of gameTurns) {
+    const { square, player } = turn;
+    const { row, col } = square;
+
+    gameBoard[row][col] = player;
+  }
+  return gameBoard;
+}
+
+function driveActivePlayer(gameTurns) {
+  let currentPlayer = "X";
+
+  if (gameTurns.length > 0 && gameTurns[0].player === "X") {
+    currentPlayer = "0";
+  }
+  return currentPlayer;
+}
+
+function App() {
+  const [players, setPlayers] = useState({ X: "player 1", 0: "player 2" });
+  const [gameTurns, setGameTurns] = useState([]);
+
+  const activePlayer = driveActivePlayer(gameTurns);
+
+  const gameBoard = driveGameBoard(gameTurns);
+
+  const winner = driveWinner(gameBoard, players);
 
   const hasDraw = gameTurns.length === 9 && !winner;
 
   function handleSelectSquare(rowIndex, colIndex) {
-    //setActvePlayer((curActivePlayer) => (curActivePlayer === "X" ? "0" : "X"));
-
     setGameTurns((prevValue) => {
       const currentPlayer = driveActivePlayer(prevValue);
 
@@ -74,12 +88,31 @@ function App() {
     setGameTurns([]);
   }
 
+  function handleChangePlayerName(symbol, newName) {
+    setPlayers((prevValue) => {
+      return {
+        ...prevValue,
+        [symbol]: newName,
+      };
+    });
+  }
+
   return (
     <main>
       <div id="game-container">
         <ol id="players" className="highlight-player">
-          <Player name="Player 1 " symbol="X" isActive={activePlayer === "X"} />
-          <Player name="player 2" symbol="0" isActive={activePlayer === "0"} />
+          <Player
+            name={PLAYER.X}
+            symbol="X"
+            isActive={activePlayer === "X"}
+            onchangeName={handleChangePlayerName}
+          />
+          <Player
+            name={PLAYER.O}
+            symbol="0"
+            isActive={activePlayer === "0"}
+            onchangeName={handleChangePlayerName}
+          />
         </ol>
 
         {(winner || hasDraw) && (
